@@ -1,0 +1,32 @@
+# service name
+service: csv-import
+
+# provider config
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  region: ca-central-1
+
+# plugins for using serverless offline in dev env
+plugins:
+  - serverless-offline
+
+
+# define the functions and its options
+functions:
+  upload:
+    handler: handler.main
+    events:
+      - http:
+          path: upload
+          method: any
+          cors: true
+
+  uploads3:
+    handler: handler.main
+    events:
+      - http:
+          path: upload/s3
+          method: any
+          cors: true
