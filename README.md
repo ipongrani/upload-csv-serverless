@@ -9,11 +9,12 @@
     csvtojson
     cors
     serverless-http
+    AWS Sdk
 
 
 ## Setup Guide:
 
-Clone this repository with 'git clone' command: ''
+Clone this repository with 'git clone' command: 'git clone https://github.com/ipongrani/upload-csv-serverless.git'
 
 Configure the serverless.yml with your own information such as the service name and the region of deployment.
 
