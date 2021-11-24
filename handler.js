@@ -8,6 +8,11 @@ const cors = require('cors');
 const serverless = require('serverless-http');
 const multer = require('multer');
 const csvtojson = require('csvtojson')
+const AWS = require('aws-sdk');
+const s3 = new AWS.S3();
+
+
+
 
 // Setup a temporary storage in memory for the result
 const storage = multer.memoryStorage()
@@ -35,9 +40,10 @@ app.get('/upload', (req, res, next) => {
 });
 
 
+
 /* Upload with multer */
 app.post('/upload', upload.array('csv', 1),  (req, res, next) => {
-  
+
   /**
    * Multer will attach the multipart file inside req.files and in the form of an array
    */
@@ -45,9 +51,11 @@ app.post('/upload', upload.array('csv', 1),  (req, res, next) => {
   // if files array has items inside, proceed
   if (req.files.length > 0)
   {
+    console.log('file received')
     // convert the buffer to string format
     const csvString = req.files[0].buffer.toString()
     const resultSet = []
+    let _filename = '';
 
     return csvtojson({noheader:false, trim:true, output:'json'})
                       .fromString(csvString)
@@ -62,10 +70,24 @@ app.post('/upload', upload.array('csv', 1),  (req, res, next) => {
                         /**
                          * After all the lines have been processed, send back the result to the user
                          */
-                        return res.status(200).send(resultSet);
+
+                        // perform upload with a promise
+                        _filename = `public-uploaded-csv/${Date.now()}.json`
+                        return s3.upload({ Bucket: 'upload-csv-app',
+                                            Key: _filename,
+                                            Body: JSON.stringify(resultSet),
+                                            ContentType: "application/json",
+                                            ACL:'public-read' }).promise()
+                                  
+                        
+                      })
+                      .then(() => {
+                        //return the result back
+                        return res.status(200).send({objLink: _filename, resultSet});
                       })
                       .catch(error => {
                         // handle errors
+                        console.log('error at csvtojson: ', error)
                         return res.status(502).send({message: 'please report to administrator'})
                       })
   } 
@@ -80,9 +102,11 @@ app.post('/upload', upload.array('csv', 1),  (req, res, next) => {
 
 
 
+
+
 /* Upload with s3 */
-app.get('/upload/s3', (req, res, next) => {
-  res.status(200).send("<h1>This will be an implementtation using s3</h1>");
+app.get('/upload/s3',upload.array('csv', 1), (req, res, next) => {
+  res.status(200).send("<h1>This will be an implementation using s3 please POST request to /upload </h1>");
 });
 
 
